@@ -1,7 +1,5 @@
 package com.aws.handler;
 
-import org.joda.time.DateTime;
-
 import com.amazonaws.services.lambda.runtime.events.S3Event;
 
 public class S3EventHandler {
