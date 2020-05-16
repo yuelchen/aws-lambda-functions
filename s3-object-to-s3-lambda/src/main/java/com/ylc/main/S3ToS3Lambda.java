@@ -16,7 +16,7 @@ public class S3ToS3Lambda {
 		String eventType = S3EventHandler.getEventType(event);
 		String sourceBucket = S3EventHandler.getBucketName(event);
 		String sourcePrefix = S3EventHandler.getObjectPrefix(event);		
-		AppLog.log.info("S3ToS3Lambda triggered by event type '" + eventType + "' from 's3://" + sourceBucket + "/" + sourcePrefix + "'");
+		AppLog.log.info("S3ToS3Lambda triggered by event type '" + eventType + "' from '" + this.getFullS3Path(sourceBucket, sourcePrefix) + "'");
 		
 		String destinationBucket = System.getenv(ENV_BUCKET);
 		String destinationPrefix = System.getenv(ENV_PREFIX);
@@ -30,12 +30,23 @@ public class S3ToS3Lambda {
 	private void transferSourceFile(String sourceBucket, String sourcePrefix, String destinationBucket, String destinationPrefix) {
 		String downloadLocation = this.getRandomFilenameLocation();
 		if(S3ClientHandler.downloadObject(sourceBucket, sourcePrefix, downloadLocation)) {
-			//upload object
+			AppLog.log.info("Successfully copied S3 object from '" + this.getFullS3Path(sourceBucket, sourcePrefix) + "' to local location '" + downloadLocation + "'");
+			this.copySourceFile(downloadLocation, destinationBucket, destinationPrefix);
 		} 
 	}
 	
 	private String getRandomFilenameLocation() {
 		String randomFilename = RandomStringUtils.randomAlphabetic(10);
 		return this.TEMP_LOCATION.concat(randomFilename);
+	}
+	
+	private void copySourceFile(String downloadLocation, String destinationBucket, String destinationPrefix) {
+		if(S3ClientHandler.uploadObject(downloadLocation, destinationBucket, destinationPrefix)) {
+			AppLog.log.info("Successfully copied S3 object from local location '" + downloadLocation + "' to '" + this.getFullS3Path(destinationBucket, destinationPrefix) + "'");
+		} 
+	}
+	
+	private String getFullS3Path(String bucketName, String objectPrefix) {
+		return "s3://" + bucketName + "/" + objectPrefix;
 	}
 }
